@@ -13,3 +13,8 @@ rstest = "0.18"
 tempfile = "3.9"
 heapstore = { path = "./heapstore" }
 common = { path = "../common" }
+memstore = { path = "./memstore" }
+# foster_btree = { path = "./foster_btree" }
+# paged_mem_store = { path = "./paged_mem_store" }
+# idx_fixed_store = { path = "./idx_fixed_store" }
+utilities = { path = "../utilities" }

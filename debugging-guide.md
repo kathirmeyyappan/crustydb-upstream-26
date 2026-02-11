@@ -77,7 +77,7 @@ in the last line.
 We'll now parse in detail what each section of the code for this function does,
 both so you can understand and potentially use it again in other contexts in
 CrustyDB and so you can modify if you wish. The function that produces this
-the `fmt::Debug` implementation for `Page`, in `src/storage/page.rs`.
+starts on line 193 in `page.rs`. 
 
 You can read more about how Rust formatting works for types [here](https://doc.rust-lang.org/std/fmt/index.html#formatting-traits), 
 but to format an object using the `?` operator, we must implement the `Debug`
@@ -95,7 +95,7 @@ finish the `fmt` function.
 ### How can you modify or extend it and how may you want to do so?
 
 If you wish to either shorten or extend lines, you can simply vary
-`BYTES_PER_LINE` in `page.rs`. If you wish to change the way the
+`BYTES_PER_LINE` on line 13 of `page.rs`. If you wish to change the way the
 positions are printed at the beginnings of lines or how 0x0 or 0xff are printed,
 please do--you can find how these are done within the loop described above. All
 of these changes would be for personal preference: you do not have to modify
@@ -103,7 +103,8 @@ these values at all and will still be able to use the tool to its full effect.
 
 As you implement `Page`, you will need to implement a header to manage free
 space. As this is still unimplemented, the tool doesn't print anything prior to
-the contents of the page. You may modify the function to print your header information. This could include
+the contents of the page. In line 200 we add a comment indicating where you
+should add code to print the contents of the header. This could include
 information such as the `PID` or the location of slots and slot IDs. 
 
 This tool is not used in the tests so if you do not wish to use or do not wish

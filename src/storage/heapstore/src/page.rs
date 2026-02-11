@@ -8,6 +8,7 @@ use std::hash::Hasher;
 use std::mem;
 use std::ops::Deref;
 use std::ops::DerefMut;
+use std::convert::TryInto;
 
 /// Data type to hold any value smaller than the size of a page.
 /// We choose u16 because it is sufficient to represent any slot that fits in a 4096-byte-sized page.
@@ -20,6 +21,15 @@ pub const OFFSET_NUM_BYTES: usize = mem::size_of::<Offset>();
 
 /// For debugging purposes only
 const BYTES_PER_LINE: usize = 40;
+
+/// Slots of offsets and length for values stored.
+/// Using slotId as type for offset as we know we cannot have more bytes than slots.
+pub type Slot = (Offset, Offset);
+
+/// The code we will use to indicate the slow is empty.  
+/// Since we know we have a header in the page, no bytes can be at zero.
+pub const SLOT_EMPTY: Slot = (0, 0);
+
 
 #[allow(dead_code)]
 pub const PAGE_ID_SIZE: usize = mem::size_of::<PageId>();
@@ -38,7 +48,7 @@ pub const CHECKSUM_OFFSET: usize = LSN_SLOT_OFFSET + SLOT_ID_SIZE;
 /// The number of bytes reserved for the fixed header of all pages.
 pub const PAGE_FIXED_HEADER_LEN: usize = 16;
 
-// PG MS Add any additional header fields or constants/metadata you need here.
+// PG MS Add any additional header fields or constants/metadata you neeed here.
 
 #[cfg(test)]
 const _: () = {

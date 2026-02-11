@@ -2,6 +2,10 @@
 mod tests {
     use std::collections::VecDeque;
 
+    use crate::page::Offset;
+    use crate::page::Slot;
+    use std::mem;
+
     use crate::page::Page;
     use crate::page::PAGE_FIXED_HEADER_LEN;
 
@@ -326,6 +330,56 @@ mod tests {
         let check_bytes = p.get_value(4).unwrap();
         assert_eq!(new_bytes, check_bytes);
         vals[4] = new_bytes.clone();
+    }
+
+
+    #[test]
+    fn hs_silent_page_get_first_free_space() {
+        init();
+        let mut p = Page::new(0);
+        p.init_heap_page();
+
+        let mut rng = get_rng();
+        let b1 = get_random_byte_vec(&mut rng, 100);
+        let b2 = get_random_byte_vec(&mut rng, 50);
+
+        let mut expected = PAGE_SIZE as Offset;
+        //First insert
+        expected -= 100;
+        assert_eq!(
+            p.find_free_space_or_compact(100, mem::size_of::<Slot>()),
+            Some(expected)
+        );
+        let _v1 = p.add_value(&b1);
+
+        //Second
+        expected -= 100;
+        let mut old_place = expected;
+        assert_eq!(
+            p.find_free_space_or_compact(100, mem::size_of::<Slot>()),
+            Some(expected)
+        );
+        let v2 = p.add_value(&b1);
+
+        //Third
+        expected -= 100;
+        assert_eq!(
+            p.find_free_space_or_compact(100, mem::size_of::<Slot>()),
+            Some(expected)
+        );
+        let _v3 = p.add_value(&b1);
+
+        //Too big
+        assert_eq!(p.find_free_space_or_compact(PAGE_SIZE, 0), None);
+
+        p.delete_value(v2.unwrap());
+        old_place += 50;
+        assert_eq!(p.find_free_space_or_compact(50, 0), Some(old_place));
+        let _v4 = p.add_value(&b2);
+        //TODO insert is using old approach
+
+        //old_place += 50;
+        //assert_eq!(p.find_free_space(50), Some(old_place));
     }
 
     #[test]
@@ -867,5 +921,46 @@ mod tests {
     pub fn hs_page_mixed_workload_large_values() {
         init();
         run_heap_page_mixed_workload(0xC0DE, 2000, 50, 100);
+    }
+
+    #[test]
+    pub fn test_compaction() {
+        init();
+        let mut p = Page::new(2);
+        p.init_heap_page();
+        let mut rng = get_rng();
+        let vals = get_ascending_vec_of_byte_vec_02x(&mut rng, 10, 24, 24);
+        let mut ins = PAGE_SIZE;
+        for v in &vals {
+            ins -= v.len();
+            p.data[ins..ins + v.len()].clone_from_slice(v);
+            p.add_slot((ins as Offset, v.len() as Offset));
+            ins -= 16; // add blank space
+        }
+        let mut check_vals = (&p).into_iter().map(|(a, _)| a.to_vec()).collect();
+        assert!(compare_unordered_byte_vecs(&vals, check_vals));
+        p.compact_space();
+        check_vals = (&p).into_iter().map(|(a, _)| a.to_vec()).collect();
+        assert!(compare_unordered_byte_vecs(&vals, check_vals));
+    }
+
+    #[test]
+    pub fn test_increased_size_update() {
+        init();
+        let mut p = Page::new(2);
+        p.init_heap_page();
+
+        let mut rng = get_rng();
+
+        let v1 = get_random_byte_vec(&mut rng, PAGE_SIZE / 4);
+        let s1 = p.add_value(&v1).unwrap();
+
+        let v2 = get_random_byte_vec(&mut rng, PAGE_SIZE / 4);
+        p.add_value(&v2).unwrap();
+
+        let total_free_space = p.get_free_space();
+
+        let v3 = get_random_byte_vec(&mut rng, v1.len() + total_free_space);
+        assert!(p.update_value(s1, &v3).is_some());
     }
 }

@@ -34,3 +34,9 @@ inlinecc = ["mvcc"]
 [dev-dependencies]
 criterion = "0.5"
 
+[[bench]]
+name = "tuple_bench"
+harness = false
+
+[profile.bench]
+lto = false
